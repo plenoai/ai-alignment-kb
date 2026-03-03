@@ -68,3 +68,6 @@ AI エージェントが分析だけでなく実行（外部 API へのコミッ
 ## ソース
 
 - [Claude Code による Google 広告監査](./google-ads-audit.md)
+
+---
+[tag-pattern](./tag-pattern.md)

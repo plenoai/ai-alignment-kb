@@ -72,3 +72,6 @@
 
 - [Claude Ads スキル](./claude-ads.md)
 - [Claude Code による Google 広告監査](./google-ads-audit.md)
+
+---
+[tag-pattern](./tag-pattern.md)

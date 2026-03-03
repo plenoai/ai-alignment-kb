@@ -74,3 +74,6 @@
 ## ソース
 
 - [Claude Ads スキル](./claude-ads.md)
+
+---
+[tag-pattern](./tag-pattern.md)
