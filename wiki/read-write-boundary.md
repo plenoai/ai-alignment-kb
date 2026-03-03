@@ -59,6 +59,7 @@ AI エージェントが分析だけでなく実行（外部 API へのコミッ
 - **Claude Code + Google Ads 監査:** 監査レポート生成は自動、ネガティブキーワード登録は人間確認後に API 実行
 - **コードレビュー AI:** Lint・静的解析は自動、コードの自動マージは人間承認後
 - **医療 AI 診断支援:** 症状分析・鑑別診断リスト生成は自動、処方は医師の最終判断
+- **Ralph Loop:** リファクタリング後に E2E テストが失敗したら変更を自動リバート。書き込みをラウンド単位で可逆にする
 
 ## 関連パターン
 
@@ -67,7 +68,7 @@ AI エージェントが分析だけでなく実行（外部 API へのコミッ
 
 ## ソース
 
-- [Claude Code による Google 広告監査](./google-ads-audit.md)
+- [Claude Ads / Claude Code 広告監査](./claude-ads.md)
 
 ---
 [tag-pattern](./tag-pattern.md)

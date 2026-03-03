@@ -70,8 +70,7 @@
 
 ## ソース
 
-- [Claude Ads スキル](./claude-ads.md)
-- [Claude Code による Google 広告監査](./google-ads-audit.md)
+- [Claude Ads / Claude Code 広告監査](./claude-ads.md)
 
 ---
 [tag-pattern](./tag-pattern.md)
