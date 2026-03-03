@@ -18,20 +18,20 @@ AI の能力向上に伴い、以下のジレンマが生じる：
 
 ### 1. 自律性の層別化
 タスクの可逆性・リスクに応じて自律性のレベルを分ける。
-→ [Read-Write 境界パターン](../../app/patterns/read-write-boundary.md)
+→ [Read-Write 境界パターン](read-write-boundary.md)
 
 ### 2. 分業と並列化
 複数の AI エージェントに役割を分担させ、相互検証する。
-→ [並列専門エージェントパターン](../../app/patterns/parallel-specialist-agents.md)
+→ [並列専門エージェントパターン](parallel-specialist-agents.md)
 
 ### 3. 知識の構造化と外部化
 人間の専門知識を AI が参照可能な形に変換する。
-→ [ドメイン知識コード化パターン](../../app/patterns/domain-knowledge-as-code.md)
-→ [外部化知識（RAG）パターン](../../app/patterns/externalized-knowledge-rag.md)
+→ [ドメイン知識コード化パターン](domain-knowledge-as-code.md)
+→ [外部化知識（RAG）パターン](externalized-knowledge-rag.md)
 
 ### 4. 透明な評価指標
 AI の判断を人間が効率的に監視できる形に圧縮する。
-→ [定量ヘルススコアパターン](../../app/patterns/quantitative-health-score.md)
+→ [定量ヘルススコアパターン](quantitative-health-score.md)
 
 ## 関連概念
 

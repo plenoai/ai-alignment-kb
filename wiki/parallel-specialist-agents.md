@@ -73,4 +73,4 @@
 
 ## ソース
 
-- [Claude Ads スキル](../../packages/knowledge/claude-ads-skill.md)
+- [Claude Ads スキル](./claude-ads.md)

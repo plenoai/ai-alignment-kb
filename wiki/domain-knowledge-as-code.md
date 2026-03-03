@@ -64,11 +64,11 @@
 
 ## 関連パターン
 
-- [外部化知識（RAG）パターン](./externalized-knowledge-rag.md) — ルールセットをどこに置くかの設計
+- [外部化知識（RAG）パターン](./externalized-knowledge.md) — ルールセットをどこに置くかの設計
 - [並列専門エージェントパターン](./parallel-specialist-agents.md) — ドメイン別にルールセットを分割する
 - [定量ヘルススコアパターン](./quantitative-health-score.md) — ルールの適用結果を集約する
 
 ## ソース
 
-- [Claude Ads スキル](../../packages/knowledge/claude-ads-skill.md)
-- [Claude Code による Google 広告監査](../../packages/knowledge/claude-code-google-ads-audit.md)
+- [Claude Ads スキル](./claude-ads.md)
+- [Claude Code による Google 広告監査](./google-ads-audit.md)
