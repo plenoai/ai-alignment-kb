@@ -10,3 +10,4 @@ WikiXP 形式で記述された設計パターン。
 - [クローズドループ自律改善](./closed-loop-autonomous-improvement.md)
 - [メタ改善ループ](./meta-improvement-loop.md)
 - [階層的エージェント監視](./hierarchical-agent-oversight.md)
+- [上流意図検証](./upstream-intent-verification.md)
