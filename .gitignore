@@ -4,3 +4,4 @@ __pycache__/
 *.pyc
 graph.html
 graph_cognee.html
+# docs/index.html は visualize.py が生成する（コミット対象）

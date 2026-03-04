@@ -33,7 +33,7 @@ from cognee.infrastructure.databases.graph import get_graph_engine  # noqa: E402
 
 WIKI_DIR = Path(__file__).parent / "wiki"
 DATA_DIR = Path(__file__).parent / ".data"
-OUTPUT = Path(__file__).parent / "graph.html"
+OUTPUT = Path(__file__).parent / "docs" / "index.html"
 LINK_RE = re.compile(r"\[([^\]]+)\]\(\.?/?([^)#]+)\.md\)")
 
 # wiki ページ種別タグ → 色（大ノード）
