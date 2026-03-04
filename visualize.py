@@ -172,79 +172,147 @@ HTML = """\
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI Alignment KB — Unified Knowledge Graph</title>
 <script src="https://unpkg.com/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+<script src="https://unpkg.com/marked@12.0.0/marked.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body { background:#060e1a; color:#e2e8f0; font-family:system-ui,sans-serif; overflow:hidden; }
-#graph { width:100vw; height:100vh; }
+html, body { height:100%; background:#060e1a; color:#e2e8f0; font-family:system-ui,sans-serif; overflow:hidden; }
 
-/* ─── パネル ─── */
+/* ── レイアウト ── */
+#app { display:flex; height:100vh; }
+#graph-wrap { flex:1; position:relative; min-width:0; }
+#graph { width:100%; height:100%; }
+
+/* ── 右ペイン ── */
+#reader {
+  width:0; overflow:hidden; transition:width .25s ease;
+  background:#0b1627; border-left:1px solid #1e293b;
+  display:flex; flex-direction:column;
+}
+#reader.open { width:420px; }
+#reader-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:12px 16px; border-bottom:1px solid #1e293b; flex-shrink:0;
+  gap:8px;
+}
+#reader-title { font-size:13px; font-weight:600; color:#e2e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#reader-close {
+  flex-shrink:0; background:none; border:none; color:#475569; cursor:pointer;
+  font-size:18px; line-height:1; padding:2px 4px; border-radius:4px;
+}
+#reader-close:hover { color:#e2e8f0; background:#1e293b; }
+#reader-body {
+  flex:1; overflow-y:auto; padding:20px 20px 40px;
+  scrollbar-width:thin; scrollbar-color:#1e293b transparent;
+}
+
+/* ── Markdown スタイル ── */
+#reader-body h1 { font-size:1.3em; color:#e2e8f0; margin:0 0 12px; line-height:1.3; }
+#reader-body h2 { font-size:1.05em; color:#cbd5e1; margin:22px 0 8px; border-bottom:1px solid #1e293b; padding-bottom:4px; }
+#reader-body h3 { font-size:.95em; color:#94a3b8; margin:16px 0 6px; }
+#reader-body p  { font-size:.88em; color:#94a3b8; line-height:1.75; margin-bottom:10px; }
+#reader-body ul, #reader-body ol { padding-left:1.4em; margin-bottom:10px; }
+#reader-body li { font-size:.88em; color:#94a3b8; line-height:1.7; }
+#reader-body a  { color:#4f8ef7; text-decoration:none; }
+#reader-body a:hover { text-decoration:underline; }
+#reader-body code { font-family:ui-monospace,monospace; font-size:.82em; background:#0f172a; color:#7dd3fc; padding:1px 5px; border-radius:3px; }
+#reader-body pre { background:#0f172a; border:1px solid #1e293b; border-radius:6px; padding:12px; overflow-x:auto; margin-bottom:12px; }
+#reader-body pre code { background:none; padding:0; font-size:.82em; color:#7dd3fc; }
+#reader-body blockquote { border-left:3px solid #334155; margin:0 0 10px; padding:4px 12px; color:#64748b; font-size:.88em; }
+#reader-body table { width:100%; border-collapse:collapse; margin-bottom:12px; font-size:.83em; }
+#reader-body th { background:#0f172a; color:#cbd5e1; padding:6px 8px; text-align:left; border:1px solid #1e293b; }
+#reader-body td { color:#94a3b8; padding:5px 8px; border:1px solid #1e293b; }
+#reader-body strong { color:#cbd5e1; }
+#reader-body hr { border:none; border-top:1px solid #1e293b; margin:14px 0; }
+
+/* ── 左パネル ── */
 #panel {
-  position:fixed; top:14px; left:14px; z-index:10;
-  background:rgba(6,14,26,.9); border:1px solid #1e293b;
+  position:absolute; top:14px; left:14px; z-index:10;
+  background:rgba(6,14,26,.92); border:1px solid #1e293b;
   border-radius:10px; padding:14px 16px; font-size:12px;
-  backdrop-filter:blur(8px); width:230px;
+  backdrop-filter:blur(8px); width:220px;
+  transition:transform .2s ease;
 }
 #panel h2 { font-size:11px; color:#475569; letter-spacing:.08em; text-transform:uppercase; margin-bottom:10px; }
-
 .legend-row { display:flex; align-items:center; gap:8px; margin-bottom:5px; }
-.dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-.dot-sm { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-
+.dot    { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.dot-sm { width:7px;  height:7px;  border-radius:50%; flex-shrink:0; }
 .divider { border:none; border-top:1px solid #1e293b; margin:10px 0; }
-
-/* トグル */
 .toggle-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; cursor:pointer; user-select:none; }
 .toggle-row input { accent-color:#4f8ef7; cursor:pointer; }
-
-/* 詳細 */
-#detail { margin-top:10px; color:#94a3b8; line-height:1.6; font-size:11px; min-height:40px; }
+#detail { margin-top:10px; color:#94a3b8; line-height:1.6; font-size:11px; min-height:36px; }
 #detail strong { color:#e2e8f0; }
+#stats  { color:#334155; font-size:10px; margin-top:8px; }
 
-/* ステータス */
-#stats { color:#334155; font-size:10px; margin-top:8px; }
+/* ── ハンバーガー（スマホ用パネル開閉）── */
+#menu-btn {
+  display:none; position:absolute; top:12px; left:12px; z-index:20;
+  background:rgba(6,14,26,.9); border:1px solid #1e293b; border-radius:8px;
+  color:#e2e8f0; font-size:18px; width:38px; height:38px;
+  cursor:pointer; align-items:center; justify-content:center;
+}
 
-/* ツールチップ */
+/* ── ツールチップ ── */
 #tooltip {
   display:none; position:fixed; background:rgba(6,14,26,.95);
   border:1px solid #1e293b; border-radius:5px; padding:5px 9px;
-  font-size:11px; pointer-events:none; max-width:220px; z-index:20;
+  font-size:11px; pointer-events:none; max-width:220px; z-index:30;
   word-break:break-all; line-height:1.5;
+}
+
+/* ── スマホ対応 ── */
+@media (max-width: 640px) {
+  #reader.open { width:100vw; position:fixed; top:0; left:0; right:0; bottom:0; z-index:40; }
+  #panel { width:calc(100vw - 28px); transform:translateY(-120%); }
+  #panel.sp-open { transform:translateY(0); }
+  #menu-btn { display:flex; }
+  #reader-body h1 { font-size:1.1em; }
 }
 </style>
 </head>
 <body>
-<div id="graph"></div>
+<div id="app">
+  <div id="graph-wrap">
+    <div id="graph"></div>
+    <button id="menu-btn" onclick="togglePanel()" title="メニュー">☰</button>
+    <div id="panel">
+      <h2>AI Alignment KB</h2>
+      <div class="legend-row"><div class="dot" style="background:#4f8ef7"></div>パターン (wiki)</div>
+      <div class="legend-row"><div class="dot" style="background:#f7a94f"></div>コンセプト (wiki)</div>
+      <div class="legend-row"><div class="dot" style="background:#4fc98e"></div>事例 (wiki)</div>
+      <div class="legend-row"><div class="dot-sm" style="background:#1e3a5f;border:1px solid #4f8ef7"></div>エンティティ (cognee)</div>
+      <hr class="divider">
+      <label class="toggle-row"><input type="checkbox" id="tog-wiki-links" checked> wiki ページ間リンク</label>
+      <label class="toggle-row"><input type="checkbox" id="tog-entities" checked> cognee エンティティ</label>
+      <label class="toggle-row"><input type="checkbox" id="tog-entity-links" checked> エンティティ間リレーション</label>
+      <label class="toggle-row"><input type="checkbox" id="tog-anchors" checked> エンティティ↔ページ接続</label>
+      <hr class="divider">
+      <div id="detail">ページノードをタップして内容を表示</div>
+      <div id="stats">STATS_TEXT</div>
+    </div>
+  </div>
 
-<div id="panel">
-  <h2>AI Alignment KB</h2>
-
-  <div class="legend-row"><div class="dot" style="background:#4f8ef7"></div>パターン (wiki)</div>
-  <div class="legend-row"><div class="dot" style="background:#f7a94f"></div>コンセプト (wiki)</div>
-  <div class="legend-row"><div class="dot" style="background:#4fc98e"></div>事例 (wiki)</div>
-  <div class="legend-row"><div class="dot-sm" style="background:#1e3a5f;border:1px solid #4f8ef7"></div>エンティティ (cognee)</div>
-
-  <hr class="divider">
-
-  <label class="toggle-row"><input type="checkbox" id="tog-wiki-links" checked> wiki ページ間リンク</label>
-  <label class="toggle-row"><input type="checkbox" id="tog-entities" checked> cognee エンティティ</label>
-  <label class="toggle-row"><input type="checkbox" id="tog-entity-links" checked> エンティティ間リレーション</label>
-  <label class="toggle-row"><input type="checkbox" id="tog-anchors" checked> エンティティ↔ページ接続</label>
-
-  <hr class="divider">
-  <div id="detail">ノードをクリックして詳細を表示</div>
-  <div id="stats">STATS_TEXT</div>
+  <!-- 右ペイン: Markdown リーダー -->
+  <div id="reader">
+    <div id="reader-header">
+      <span id="reader-title"></span>
+      <button id="reader-close" onclick="closeReader()" title="閉じる">✕</button>
+    </div>
+    <div id="reader-body"></div>
+  </div>
 </div>
 
 <div id="tooltip"></div>
 
 <script>
-const PAGE_NODES  = PAGE_NODES_JSON;
-const PAGE_EDGES  = PAGE_EDGES_JSON;
-const ENT_NODES   = ENT_NODES_JSON;
-const ENT_EDGES   = ENT_EDGES_JSON;
-const ANCHOR_EDGES = ANCHOR_EDGES_JSON;  // entity → wiki page
+const PAGE_NODES   = PAGE_NODES_JSON;
+const PAGE_EDGES   = PAGE_EDGES_JSON;
+const ENT_NODES    = ENT_NODES_JSON;
+const ENT_EDGES    = ENT_EDGES_JSON;
+const ANCHOR_EDGES = ANCHOR_EDGES_JSON;
+const MD_CONTENTS  = MD_CONTENTS_JSON;   // { stem: markdown_string }
 
 // ── データセット ──────────────────────────────────────────────────────────────
 const allNodes = new vis.DataSet([...PAGE_NODES, ...ENT_NODES]);
@@ -278,37 +346,71 @@ const network = new vis.Network(container, { nodes: allNodes, edges: allEdges },
 
 // ── トグル ────────────────────────────────────────────────────────────────────
 function applyToggles() {
-  const showWikiLinks   = document.getElementById("tog-wiki-links").checked;
-  const showEntities    = document.getElementById("tog-entities").checked;
-  const showEntityLinks = document.getElementById("tog-entity-links").checked;
-  const showAnchors     = document.getElementById("tog-anchors").checked;
-
-  const nodeUpdates = [
-    ...ENT_NODES.map(n => ({ id: n.id, hidden: !showEntities })),
-  ];
-  allNodes.update(nodeUpdates);
-
-  const edgeUpdates = allEdges.get().map(e => {
-    let hidden = false;
-    if (e.group === "wiki")   hidden = !showWikiLinks;
-    if (e.group === "entity") hidden = !showEntityLinks || !showEntities;
-    if (e.group === "anchor") hidden = !showAnchors || !showEntities;
-    return { id: e.id, hidden };
-  });
-  allEdges.update(edgeUpdates);
+  allNodes.update(ENT_NODES.map(n => ({ id: n.id, hidden: !document.getElementById("tog-entities").checked })));
+  allEdges.update(allEdges.get().map(e => {
+    const showWiki   = document.getElementById("tog-wiki-links").checked;
+    const showEnt    = document.getElementById("tog-entities").checked;
+    const showRel    = document.getElementById("tog-entity-links").checked;
+    const showAnchor = document.getElementById("tog-anchors").checked;
+    return { id: e.id, hidden:
+      (e.group === "wiki"   && !showWiki) ||
+      (e.group === "entity" && (!showRel || !showEnt)) ||
+      (e.group === "anchor" && (!showAnchor || !showEnt))
+    };
+  }));
 }
-
 ["tog-wiki-links","tog-entities","tog-entity-links","tog-anchors"].forEach(id =>
   document.getElementById(id).addEventListener("change", applyToggles)
 );
+
+// ── Markdown リーダー ────────────────────────────────────────────────────────
+function openReader(stem, title) {
+  const md = MD_CONTENTS[stem];
+  if (!md) return;
+  document.getElementById("reader-title").textContent = title;
+  // wiki 内リンクをグラフ上のノードクリックに変換
+  const rendered = marked.parse(md, { breaks: false });
+  document.getElementById("reader-body").innerHTML = rendered;
+  // 内部リンクをインターセプト
+  document.querySelectorAll("#reader-body a").forEach(a => {
+    const href = a.getAttribute("href") || "";
+    const m = href.match(/^(?:\.\/)?([\\w-]+)\\.md$/);
+    if (m) {
+      a.href = "javascript:void(0)";
+      a.addEventListener("click", e => { e.preventDefault(); jumpToNode(m[1]); });
+    }
+  });
+  document.getElementById("reader").classList.add("open");
+  // グラフ幅を再計算
+  setTimeout(() => { network.redraw(); network.fit(); }, 260);
+}
+
+function closeReader() {
+  document.getElementById("reader").classList.remove("open");
+  setTimeout(() => { network.redraw(); }, 260);
+}
+
+function jumpToNode(stem) {
+  const n = allNodes.get(stem);
+  if (!n) return;
+  network.focus(stem, { scale: 1.2, animation: true });
+  network.selectNodes([stem]);
+  openReader(stem, n.label);
+}
+
+// ── ハンバーガー（スマホ）────────────────────────────────────────────────────
+function togglePanel() {
+  document.getElementById("panel").classList.toggle("sp-open");
+}
 
 // ── ツールチップ & クリック ───────────────────────────────────────────────────
 const tooltip = document.getElementById("tooltip");
 const detail  = document.getElementById("detail");
 
 network.on("hoverNode", ({ node, event }) => {
-  const n = allNodes.get(node);
-  tooltip.textContent = n.label;
+  // スマホではツールチップ不要
+  if (window.innerWidth <= 640) return;
+  tooltip.textContent = allNodes.get(node).label;
   tooltip.style.display = "block";
   tooltip.style.left = (event.clientX + 14) + "px";
   tooltip.style.top  = (event.clientY - 10) + "px";
@@ -316,33 +418,20 @@ network.on("hoverNode", ({ node, event }) => {
 network.on("blurNode", () => { tooltip.style.display = "none"; });
 
 network.on("click", ({ nodes: sel }) => {
-  if (!sel.length) { detail.innerHTML = "ノードをクリックして詳細を表示"; return; }
+  if (!sel.length) { detail.innerHTML = "ページノードをタップして内容を表示"; return; }
   const n = allNodes.get(sel[0]);
   if (n.kind === "page") {
     detail.innerHTML = `<strong>${n.label}</strong><br>`
-      + `<span style="color:#475569">種別: ${n.pageType || "—"}</span><br>`
-      + `<span style="color:#475569">サブドメイン: ${n.subdomain || "—"}</span>`;
-    // ダブルクリックで wiki ページを開く
+      + `<span style="color:#475569">${n.pageType || ""} ${n.subdomain ? "/ " + n.subdomain : ""}</span>`;
+    openReader(n.id, n.label);
+    // 関連エンティティを強調
+    const related = ENT_NODES.filter(e => e.wiki === n.id).map(e => e.id);
+    if (related.length) network.selectNodes([n.id, ...related]);
   } else {
     detail.innerHTML = `<strong>${n.label}</strong><br>`
       + (n.wiki ? `<span style="color:#475569">← ${n.wiki}</span><br>` : "")
-      + (n.description ? `<br>${n.description}` : "");
+      + (n.description ? `<br><span style="color:#64748b;font-size:10px">${n.description}</span>` : "");
   }
-});
-network.on("doubleClick", ({ nodes: sel }) => {
-  if (!sel.length) return;
-  const n = allNodes.get(sel[0]);
-  if (n.kind === "page") window.open("wiki/" + n.id + ".md", "_blank");
-});
-
-// ── ページクリックで関連エンティティをハイライト ──────────────────────────────
-network.on("selectNode", ({ nodes: sel }) => {
-  if (!sel.length) return;
-  const n = allNodes.get(sel[0]);
-  if (n.kind !== "page") return;
-  // そのページに属するエンティティを強調
-  const related = ENT_NODES.filter(e => e.wiki === n.id).map(e => e.id);
-  if (related.length) network.selectNodes([n.id, ...related]);
 });
 </script>
 </body>
@@ -470,12 +559,27 @@ async def main() -> None:
              + (f" | cognee {len(ent_vis)} エンティティ / {len(ent_edge_vis)} リレーション"
                 if ent_vis else ""))
 
+    # Markdown コンテンツを埋め込む（tag- / index 以外の全ページ）
+    md_contents: dict[str, str] = {
+        stem: m["text_head"].replace("...", "")  # text_head は先頭100文字のみなので全文を読む
+        for stem, m in wiki_meta.items()
+        if not stem.startswith("tag-") and stem != "index"
+    }
+    # 全文を改めて読む
+    pages = {p.stem: p for p in WIKI_DIR.glob("*.md")}
+    md_contents = {
+        stem: pages[stem].read_text(encoding="utf-8")
+        for stem in md_contents
+        if stem in pages
+    }
+
     html = HTML
     html = html.replace("PAGE_NODES_JSON",  json.dumps(page_nodes,   ensure_ascii=False))
     html = html.replace("PAGE_EDGES_JSON",  json.dumps(page_edges,   ensure_ascii=False))
     html = html.replace("ENT_NODES_JSON",   json.dumps(ent_vis,      ensure_ascii=False))
     html = html.replace("ENT_EDGES_JSON",   json.dumps(ent_edge_vis, ensure_ascii=False))
     html = html.replace("ANCHOR_EDGES_JSON",json.dumps(anchor_edges, ensure_ascii=False))
+    html = html.replace("MD_CONTENTS_JSON", json.dumps(md_contents,  ensure_ascii=False))
     html = html.replace("STATS_TEXT", stats)
 
     OUTPUT.write_text(html, encoding="utf-8")
