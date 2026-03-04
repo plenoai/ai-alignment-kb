@@ -61,6 +61,7 @@ AI エージェントが分析だけでなく実行（外部 API へのコミッ
 - **医療 AI 診断支援:** 症状分析・鑑別診断リスト生成は自動、処方は医師の最終判断
 - **Ralph Loop:** リファクタリング後に E2E テストが失敗したら変更を自動リバート。書き込みをラウンド単位で可逆にする
 - **Ankit Jain「コードレビューは死んだ」:** "ship fast, observe everything, revert faster" という新指標を提唱。可逆性を前提にした高速フィードバックループへの移行を主張。 → [Latent.space 事例](./latent-space-reviews-dead-case.md)
+- **OpenClaw 自己強化エージェント:** `ops/coach` エージェントに "Never apply config changes automatically. Propose only" を非交渉ルールとして設定。`activeHours`（09:00–23:00）で稼働時間を制限し、人間がレビューできない時間帯には書き込みゲートが機能しない条件を排除する。 → [OpenClaw 事例](./openclaw-self-reinforcing-case.md)
 
 ## 関連パターン
 
