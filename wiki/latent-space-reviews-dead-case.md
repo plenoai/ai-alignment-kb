@@ -32,4 +32,4 @@ Jain は「レビューの歴史的な役割」を再検討し、コードレビ
 - 著者: Ankit Jain
 
 ---
-[tag-case](./tag-case.md)
+[tag-case](./tag-case.md) · [tag-scalable-oversight](./tag-scalable-oversight.md)

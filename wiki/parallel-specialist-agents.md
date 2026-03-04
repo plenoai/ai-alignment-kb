@@ -78,4 +78,4 @@
 - [Claude Ads スキル](./claude-ads.md)
 
 ---
-[tag-pattern](./tag-pattern.md)
+[tag-pattern](./tag-pattern.md) · [tag-scalable-oversight](./tag-scalable-oversight.md)

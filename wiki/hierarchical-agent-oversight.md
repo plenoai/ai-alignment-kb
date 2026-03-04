@@ -80,4 +80,4 @@
 - [メタ改善ループ](./meta-improvement-loop.md) — 改善サイクル自体を上位レイヤーから改善するパターン。階層的監視の改善版
 
 ---
-[tag-pattern](./tag-pattern.md)
+[tag-pattern](./tag-pattern.md) · [tag-scalable-oversight](./tag-scalable-oversight.md)

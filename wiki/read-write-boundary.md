@@ -72,4 +72,4 @@ AI エージェントが分析だけでなく実行（外部 API へのコミッ
 - [Claude Ads / Claude Code 広告監査](./claude-ads.md)
 
 ---
-[tag-pattern](./tag-pattern.md)
+[tag-pattern](./tag-pattern.md) · [tag-scalable-oversight](./tag-scalable-oversight.md)

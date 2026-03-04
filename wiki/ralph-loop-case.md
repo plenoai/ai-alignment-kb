@@ -63,4 +63,4 @@ E2E テスト → 失敗なら自動 Revert
 - [メタ改善ループ](./meta-improvement-loop.md) — 振り返り→自己学習フェーズで改善手法そのものを更新
 
 ---
-[tag-case](./tag-case.md)
+[tag-case](./tag-case.md) · [tag-scalable-oversight](./tag-scalable-oversight.md)

@@ -45,4 +45,4 @@ AI の判断を人間が効率的に監視できる形に圧縮する。
 - [エージェント自律性のスペクトラム](./agent-autonomy-spectrum.md)
 
 ---
-[tag-concept](./tag-concept.md)
+[tag-concept](./tag-concept.md) · [tag-scalable-oversight](./tag-scalable-oversight.md)
