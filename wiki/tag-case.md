@@ -6,3 +6,5 @@
 - [Ralph Loop — Claude Code 自律改善スキル](./ralph-loop-case.md)
 - [Latent.space「コードレビューは死んだ」事例](./latent-space-reviews-dead-case.md)
 - [OpenClaw 自己強化エージェント設計](./openclaw-self-reinforcing-case.md)
+- [Cursor「第三の時代」— AI 開発の自律化](./cursor-third-era-case.md)
+- [Symphony — OpenAI 自律コーディングオーケストレータ](./symphony-case.md)

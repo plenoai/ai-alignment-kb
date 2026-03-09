@@ -11,3 +11,4 @@ WikiXP 形式で記述された設計パターン。
 - [メタ改善ループ](./meta-improvement-loop.md)
 - [階層的エージェント監視](./hierarchical-agent-oversight.md)
 - [上流意図検証](./upstream-intent-verification.md)
+- [検証天井](./verification-ceiling.md)

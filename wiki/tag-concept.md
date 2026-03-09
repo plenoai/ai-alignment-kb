@@ -8,3 +8,4 @@
 - [RLHF（人間フィードバックによる強化学習）](./rlhf.md)
 - [Constitutional AI](./constitutional-ai.md)
 - [Interpretability（解釈可能性）](./interpretability.md)
+- [ハーネスエンジニアリング](./harness-engineering.md)
