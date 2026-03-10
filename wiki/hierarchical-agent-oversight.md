@@ -75,6 +75,7 @@
 - **Cursor クラウドエージェント:** 開発者がメタレベルで複数の自律エージェントを監視。個別のコード行ではなく成果物（ログ・動画・プレビュー）ベースで介入判断する。社内 PR の 1/3 以上がエージェント起源。 → [Cursor 事例](./cursor-third-era-case.md)
 - **Symphony（OpenAI）:** オーケストレータがメタエージェントとして複数コーディングエージェントをグローバルスロット・ストール検知・リトライ管理で統括。個別行動は監視せず状態遷移と全体指標で管理。 → [Symphony 事例](./symphony-case.md)
 - **OpenAI — AI Discovered Unknowns:** AI ジャッジがメタエージェントとして ChatGPT の全会話を俯瞰的に監視し、個別会話ではなく全体パターンでミスアライメントを検出。 → [OpenAI AI Discovered Unknowns 事例](./openai-ai-discovered-unknowns-case.md)
+- **OpenAI Agentic Governance（2023）:** プラクティス 5「自動モニタリング」で第二の監視 AI がプライマリエージェントの推論・アクションを審査する構造を提案。再帰的脆弱性（プロンプトインジェクションが監視 AI にも波及）とコスト課題を明示。 → [OpenAI エージェント型 AI ガバナンス事例](./openai-agentic-governance-case.md)
 - **OpenAI — コード検証スケーリング:** 自動コードレビューシステムがメタレビュアーとして月間 100 万件以上の PR を監視。重要な問題に焦点を当て、人間の判断を支援。 → [OpenAI コード検証事例](./openai-scaling-code-verification-case.md)
 
 ## 関連パターン

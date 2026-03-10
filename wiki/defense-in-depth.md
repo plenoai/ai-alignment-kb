@@ -37,6 +37,7 @@
 
 ## 既知の使用例
 
+- **OpenAI Agentic Governance（2023）:** 7 つのガバナンスプラクティス（タスク適合性評価、行動空間制約、デフォルト行動設定、可読性、自動モニタリング、帰属可能性、中断可能性）を明示的に「defense-in-depth」アプローチと位置づけ。 → [OpenAI エージェント型 AI ガバナンス事例](./openai-agentic-governance-case.md)
 - [Putting up Bumpers](https://alignment.anthropic.com/2025/bumpers/) — 半ダースの独立バンパー戦略
 - [Three Sketches of ASL-4 Safety Case Components](https://alignment.anthropic.com/2024/safety-cases/) — 機械的解釈可能性、AIコントロール、インセンティブ分析の3層
 - [Constitutional Classifiers](https://www.anthropic.com/research/constitutional-classifiers) — 入出力分類器でジェイルブレイク成功率86%→4.4%

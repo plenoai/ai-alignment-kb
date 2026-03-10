@@ -13,3 +13,4 @@
 - [OpenAI — Confessions: 自己告白によるミスアライメント検出](./openai-confessions-case.md)
 - [OpenAI — 本番環境評価による評価認識の回避](./openai-prod-evals-case.md)
 - [OpenAI — コード検証のスケーリング](./openai-scaling-code-verification-case.md)
+- [OpenAI — エージェント型 AI ガバナンス実践](./openai-agentic-governance-case.md)

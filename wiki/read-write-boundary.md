@@ -63,6 +63,7 @@ AI エージェントが分析だけでなく実行（外部 API へのコミッ
 - **Ankit Jain「コードレビューは死んだ」:** "ship fast, observe everything, revert faster" という新指標を提唱。可逆性を前提にした高速フィードバックループへの移行を主張。 → [Latent.space 事例](./latent-space-reviews-dead-case.md)
 - **OpenClaw 自己強化エージェント:** `ops/coach` エージェントに "Never apply config changes automatically. Propose only" を非交渉ルールとして設定。`activeHours`（09:00–23:00）で稼働時間を制限し、人間がレビューできない時間帯には書き込みゲートが機能しない条件を排除する。 → [OpenClaw 事例](./openclaw-self-reinforcing-case.md)
 - **Cursor クラウドエージェント:** エージェントは VM 上で自由にコードを書き込むが、成果物は diff ではなくログ・動画記録・ライブプレビューとして出力。人間は成果物ベースでレビューする。承認ゲートの入力がリッチ化した形態。 → [Cursor 事例](./cursor-third-era-case.md)
+- **OpenAI Agentic Governance（2023）:** プラクティス 2「行動空間の制約と承認要求」で、不可逆・高リスクなアクションにはユーザー承認を必須にし、一部アクション（武器制御等）は完全禁止する設計を提案。タイムアウト・サンドボックス・ネットワーク制御の併用を推奨。 → [OpenAI エージェント型 AI ガバナンス事例](./openai-agentic-governance-case.md)
 - **Symphony（OpenAI）:** エージェントはワークスペース内で自律的にコードを書くが、本番統合は PR マージという承認ゲートを経由。承認ポリシーを実装定義にすることで境界の位置を環境の信頼度に応じて調整可能。 → [Symphony 事例](./symphony-case.md)
 
 ## 関連パターン
