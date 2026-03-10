@@ -9,3 +9,6 @@
 - [Constitutional AI](./constitutional-ai.md)
 - [Interpretability（解釈可能性）](./interpretability.md)
 - [ハーネスエンジニアリング](./harness-engineering.md)
+- [Superposition（重畳表現）](./superposition.md)
+- [Monosemanticity（単義性）](./monosemanticity.md)
+- [Attribution Graph（帰属グラフ）](./attribution-graph.md)
