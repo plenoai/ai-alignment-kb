@@ -167,7 +167,7 @@ async def collect_cognee(wiki_meta: dict[str, dict]) -> tuple[list[dict], list[d
 
 # ── HTML 生成 ─────────────────────────────────────────────────────────────────
 
-HTML = """\
+HTML = r"""\
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -246,6 +246,31 @@ html, body { height:100%; background:#060e1a; color:#e2e8f0; font-family:system-
 #detail strong { color:#e2e8f0; }
 #stats  { color:#334155; font-size:10px; margin-top:8px; }
 
+/* ── 検索 ── */
+#search-wrap { position:relative; margin-bottom:10px; }
+#search-input {
+  width:100%; padding:6px 8px 6px 28px; border:1px solid #1e293b; border-radius:6px;
+  background:#0b1627; color:#e2e8f0; font-size:12px; outline:none;
+}
+#search-input:focus { border-color:#4f8ef7; }
+#search-icon { position:absolute; left:8px; top:50%; transform:translateY(-50%); color:#475569; font-size:12px; pointer-events:none; }
+#search-results {
+  position:absolute; top:100%; left:0; right:0; margin-top:4px;
+  background:rgba(11,22,39,.98); border:1px solid #1e293b; border-radius:6px;
+  max-height:260px; overflow-y:auto; display:none; z-index:50;
+  scrollbar-width:thin; scrollbar-color:#1e293b transparent;
+}
+#search-results.open { display:block; }
+.sr-item {
+  padding:6px 10px; cursor:pointer; font-size:11px; color:#94a3b8;
+  border-bottom:1px solid #0f172a;
+}
+.sr-item:last-child { border-bottom:none; }
+.sr-item:hover, .sr-item.active { background:#1e293b; color:#e2e8f0; }
+.sr-item .sr-title { color:#e2e8f0; font-weight:600; }
+.sr-item .sr-snippet { color:#64748b; font-size:10px; margin-top:2px; display:block; }
+.sr-item mark { background:#4f8ef720; color:#7dd3fc; border-radius:2px; padding:0 1px; }
+
 /* ── ハンバーガー（スマホ用パネル開閉）── */
 #menu-btn {
   display:none; position:absolute; top:12px; left:12px; z-index:20;
@@ -279,6 +304,11 @@ html, body { height:100%; background:#060e1a; color:#e2e8f0; font-family:system-
     <button id="menu-btn" onclick="togglePanel()" title="メニュー">☰</button>
     <div id="panel">
       <h2>AI Alignment KB</h2>
+      <div id="search-wrap">
+        <svg id="search-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="10" cy="10" r="7"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
+        <input id="search-input" type="text" placeholder="ページを検索…" autocomplete="off" spellcheck="false">
+        <div id="search-results"></div>
+      </div>
       <div class="legend-row"><div class="dot" style="background:#4f8ef7"></div>パターン (wiki)</div>
       <div class="legend-row"><div class="dot" style="background:#f7a94f"></div>コンセプト (wiki)</div>
       <div class="legend-row"><div class="dot" style="background:#4fc98e"></div>事例 (wiki)</div>
@@ -397,6 +427,97 @@ function jumpToNode(stem) {
   network.selectNodes([stem]);
   openReader(stem, n.label);
 }
+
+// ── 全文検索 ──────────────────────────────────────────────────────────────────
+const searchInput   = document.getElementById("search-input");
+const searchResults = document.getElementById("search-results");
+
+// 検索用インデックス: { stem, title, textLower }
+const searchIndex = PAGE_NODES.map(n => ({
+  stem: n.id,
+  title: n.label,
+  titleLower: n.label.toLowerCase(),
+  textLower: (MD_CONTENTS[n.id] || "").toLowerCase(),
+}));
+
+function escapeHtml(s) { return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function highlightTerm(text, term) {
+  const idx = text.toLowerCase().indexOf(term.toLowerCase());
+  if (idx === -1) return escapeHtml(text);
+  return escapeHtml(text.slice(0, idx))
+    + "<mark>" + escapeHtml(text.slice(idx, idx + term.length)) + "</mark>"
+    + escapeHtml(text.slice(idx + term.length));
+}
+
+function extractSnippet(text, term, radius) {
+  radius = radius || 40;
+  const idx = text.toLowerCase().indexOf(term.toLowerCase());
+  if (idx === -1) return "";
+  const start = Math.max(0, idx - radius);
+  const end = Math.min(text.length, idx + term.length + radius);
+  let snippet = (start > 0 ? "…" : "") + text.slice(start, end).replace(/\\n/g, " ") + (end < text.length ? "…" : "");
+  return highlightTerm(snippet, term);
+}
+
+let activeIdx = -1;
+
+function doSearch() {
+  const q = searchInput.value.trim();
+  if (!q) { searchResults.classList.remove("open"); searchResults.innerHTML = ""; activeIdx = -1; return; }
+  const ql = q.toLowerCase();
+  // スコア: タイトル完全一致 > タイトル部分一致 > 本文一致
+  const hits = [];
+  for (const entry of searchIndex) {
+    const inTitle = entry.titleLower.includes(ql);
+    const inText  = entry.textLower.includes(ql);
+    if (inTitle || inText) {
+      hits.push({ ...entry, score: inTitle ? (entry.titleLower === ql ? 3 : 2) : 1 });
+    }
+  }
+  hits.sort((a, b) => b.score - a.score);
+  if (!hits.length) { searchResults.classList.remove("open"); searchResults.innerHTML = ""; activeIdx = -1; return; }
+
+  searchResults.innerHTML = hits.slice(0, 20).map((h, i) => {
+    const titleHtml = highlightTerm(h.title, q);
+    const snippet = h.score < 2 ? extractSnippet(MD_CONTENTS[h.stem] || "", q) : "";
+    return `<div class="sr-item" data-stem="${h.stem}" data-idx="${i}"><span class="sr-title">${titleHtml}</span>${snippet ? '<span class="sr-snippet">' + snippet + '</span>' : ''}</div>`;
+  }).join("");
+  searchResults.classList.add("open");
+  activeIdx = -1;
+
+  // マッチしたノードをグラフ上で選択
+  network.selectNodes(hits.map(h => h.stem));
+}
+
+searchInput.addEventListener("input", doSearch);
+
+// キーボードナビゲーション
+searchInput.addEventListener("keydown", e => {
+  const items = searchResults.querySelectorAll(".sr-item");
+  if (!items.length) return;
+  if (e.key === "ArrowDown") { e.preventDefault(); activeIdx = Math.min(activeIdx + 1, items.length - 1); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); activeIdx = Math.max(activeIdx - 1, 0); }
+  else if (e.key === "Enter" && activeIdx >= 0) { e.preventDefault(); items[activeIdx].click(); return; }
+  else if (e.key === "Escape") { searchResults.classList.remove("open"); searchInput.blur(); return; }
+  else return;
+  items.forEach((el, i) => el.classList.toggle("active", i === activeIdx));
+  items[activeIdx]?.scrollIntoView({ block: "nearest" });
+});
+
+// 結果クリック
+searchResults.addEventListener("click", e => {
+  const item = e.target.closest(".sr-item");
+  if (!item) return;
+  const stem = item.dataset.stem;
+  searchResults.classList.remove("open");
+  jumpToNode(stem);
+});
+
+// 外側クリックで閉じる
+document.addEventListener("click", e => {
+  if (!e.target.closest("#search-wrap")) searchResults.classList.remove("open");
+});
 
 // ── ハンバーガー（スマホ）────────────────────────────────────────────────────
 function togglePanel() {
