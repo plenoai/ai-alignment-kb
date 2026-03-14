@@ -235,7 +235,7 @@ function openReader(stem, title) {
   // 内部リンクをインターセプト
   document.querySelectorAll("#reader-body a").forEach(a => {
     const href = a.getAttribute("href") || "";
-    const m = href.match(/^(?:\.\/)?([\\w-]+)\\.md$/);
+    const m = href.match(/^(?:\.\/)?([\w-]+)\.md$/);
     if (m) {
       a.href = "javascript:void(0)";
       a.addEventListener("click", e => { e.preventDefault(); jumpToNode(m[1]); });
