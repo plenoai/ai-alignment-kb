@@ -378,7 +378,10 @@ function openFromHash() {
   jumpToNode(h);
 }
 window.addEventListener("hashchange", openFromHash);
+// Try multiple strategies to ensure hash is handled on initial load
 network.once("stabilized", function() { setTimeout(openFromHash, 300); });
+network.once("afterDrawing", function() { setTimeout(openFromHash, 500); });
+setTimeout(openFromHash, 2000);
 
 network.on("click", ({ nodes: sel }) => {
   if (!sel.length) { detail.innerHTML = "ページノードをタップして内容を表示"; return; }
