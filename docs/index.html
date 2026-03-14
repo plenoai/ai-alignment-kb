@@ -372,7 +372,10 @@ network.on("blurNode", () => { tooltip.style.display = "none"; });
 // ── ハッシュルーティング ─────────────────────────────────────────────────────
 function openFromHash() {
   var h = location.hash.replace(/^#/, "");
-  if (h) jumpToNode(h);
+  if (!h) return;
+  // wiki filenames use tag- prefix but node IDs don't
+  if (!allNodes.get(h) && h.startsWith("tag-")) h = h.slice(4);
+  jumpToNode(h);
 }
 window.addEventListener("hashchange", openFromHash);
 network.once("stabilized", function() { setTimeout(openFromHash, 300); });
