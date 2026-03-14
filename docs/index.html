@@ -369,6 +369,14 @@ network.on("hoverNode", ({ node, event }) => {
 });
 network.on("blurNode", () => { tooltip.style.display = "none"; });
 
+// ── ハッシュルーティング ─────────────────────────────────────────────────────
+function openFromHash() {
+  var h = location.hash.replace(/^#/, "");
+  if (h) jumpToNode(h);
+}
+window.addEventListener("hashchange", openFromHash);
+network.once("afterDrawing", openFromHash);
+
 network.on("click", ({ nodes: sel }) => {
   if (!sel.length) { detail.innerHTML = "ページノードをタップして内容を表示"; return; }
   const n = allNodes.get(sel[0]);

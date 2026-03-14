@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script>
+// GitHub Pages SPA redirect: /ai-alignment-kb/foo.md -> /ai-alignment-kb/#foo
+var path = location.pathname;
+var m = path.match(/\/([a-z0-9_-]+)\.md$/i);
+if (m) {
+  location.replace(path.replace(/\/[^/]+$/, '/') + '#' + m[1]);
+} else {
+  location.replace(path.replace(/\/[^/]+$/, '/'));
+}
+</script>
+</head>
+<body></body>
+</html>
