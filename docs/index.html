@@ -375,7 +375,7 @@ function openFromHash() {
   if (h) jumpToNode(h);
 }
 window.addEventListener("hashchange", openFromHash);
-network.once("afterDrawing", openFromHash);
+network.once("stabilized", function() { setTimeout(openFromHash, 300); });
 
 network.on("click", ({ nodes: sel }) => {
   if (!sel.length) { detail.innerHTML = "ページノードをタップして内容を表示"; return; }
