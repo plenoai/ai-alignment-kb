@@ -130,6 +130,32 @@ class WorkflowRuntimeTests(unittest.TestCase):
         self.assertRegex(text, r"actions/deploy-pages@[0-9a-f]{40}\s+# v5")
         self.assertRegex(text, r"(?m)^\s*path:\s*docs\s*$")
 
+    def test_pages_workflow_deploys_on_every_main_push(self) -> None:
+        workflow = WORKFLOW_DIR / "pages.yml"
+        text = workflow.read_text(encoding="utf-8")
+
+        # The managed Pages build is created for every push, not only when
+        # docs changes, so the retirement job must run for every push too.
+        self.assertNotRegex(text, r"(?m)^\s*paths:\s*$")
+        # Deployment must not be skipped when the repository setting cannot be
+        # changed by GITHUB_TOKEN; the deploy action handles the source branch.
+        self.assertNotIn("pages-source", text)
+        self.assertNotRegex(text, r"(?m)^\s*if:\s*steps\.")
+
+    def test_pages_workflow_retires_the_legacy_build(self) -> None:
+        workflow = WORKFLOW_DIR / "pages.yml"
+        text = workflow.read_text(encoding="utf-8")
+
+        self.assertRegex(text, r"(?m)^\s*actions:\s*write\s*$")
+        self.assertIn('"pages build and deployment"', text)
+        self.assertIn("cancelWorkflowRun", text)
+        self.assertRegex(text, r"(?m)^\s*head_sha:\s*context\.sha,?\s*$")
+        self.assertIn("needs: retire-legacy-build", text)
+        # Cancel before deploying so the managed build cannot upload first.
+        self.assertLess(
+            text.index("retire-legacy-build"), text.index("\n  deploy:")
+        )
+
     def test_pages_artifacts_exist(self) -> None:
         for name in ("index.html", "404.html"):
             self.assertTrue(

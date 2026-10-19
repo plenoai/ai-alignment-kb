@@ -22,4 +22,4 @@ uv run search.py <クエリ>  # 検索
 uv run visualize.py        # グラフを可視化 → docs/index.html（GitHub Pages にも反映）
 ```
 
-`docs/` への push は `.github/workflows/pages.yml` が GitHub Actions 経由で GitHub Pages にデプロイする。
+`main` への push は `.github/workflows/pages.yml` が GitHub Actions 経由で GitHub Pages にデプロイする。同ワークフローは、Node.js 20 を使う GitHub 管理の `pages build and deployment` を先にキャンセルするため、Pages の Source が branch のままでも非推奨警告は出ない（Source を GitHub Actions に変更済みなら、このキャンセルは何もしない）。
