@@ -1,0 +1,90 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "docs/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, arm64, hikae-flash]
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Legacy Pages builds are run by GitHub with upload-artifact@v4, which
+      # targets Node.js 20. Prefer a repo-owned deployment and, when the token
+      # has enough permission, migrate the Pages source automatically.
+      - name: Ensure Pages uses GitHub Actions
+        id: pages-source
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+
+            let pages;
+            try {
+              ({ data: pages } = await github.rest.repos.getPages({ owner, repo }));
+            } catch (error) {
+              core.info(`Unable to read the Pages configuration: ${error.message}`);
+              core.setOutput("enabled", "false");
+              core.notice("GitHub Pages is not available. An administrator must enable it with Source: GitHub Actions.");
+              return;
+            }
+
+            if (pages.build_type === "workflow") {
+              core.info("GitHub Pages deploys from GitHub Actions.");
+              core.setOutput("enabled", "true");
+              return;
+            }
+
+            try {
+              await github.rest.repos.updateInformationAboutPagesSite({
+                owner,
+                repo,
+                build_type: "workflow",
+              });
+              core.info("Switched the GitHub Pages source to GitHub Actions.");
+              core.setOutput("enabled", "true");
+            } catch (error) {
+              // Do not emit a warning annotation: the controller turns those
+              // into new warning issues. Report the required operator action
+              // without making this workflow fail.
+              core.info(`Pages source remains "${pages.build_type}": ${error.message}`);
+              core.setOutput("enabled", "false");
+              core.notice("An administrator must set Settings > Pages > Source to GitHub Actions. Legacy branch builds use the deprecated Node.js 20 upload-artifact action.");
+            }
+
+      - name: Configure Pages
+        if: steps.pages-source.outputs.enabled == 'true'
+        uses: actions/configure-pages@v6
+
+      - name: Upload the static site
+        if: steps.pages-source.outputs.enabled == 'true'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        if: steps.pages-source.outputs.enabled == 'true'
+        uses: actions/deploy-pages@v5

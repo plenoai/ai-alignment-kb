@@ -21,3 +21,5 @@ uv run ingest.py       # wiki/ をナレッジグラフに投入
 uv run search.py <クエリ>  # 検索
 uv run visualize.py        # グラフを可視化 → docs/index.html（GitHub Pages にも反映）
 ```
+
+`docs/` への push は `.github/workflows/pages.yml` が GitHub Actions 経由で GitHub Pages にデプロイする。
