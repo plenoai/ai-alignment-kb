@@ -44,6 +44,8 @@ USES_RE = re.compile(
     re.MULTILINE,
 )
 
+RUNS_ON_RE = re.compile(r"(?m)^\s*runs-on:\s*(?P<value>[^\n#]+)")
+
 FULL_SHA_RE = re.compile(r"[0-9a-f]{40}")
 
 
@@ -76,6 +78,20 @@ class WorkflowRuntimeTests(unittest.TestCase):
                     failures.append(
                         f"{workflow.name}: {action}@{match.group('ref')} uses "
                         f"Node.js 20; use v{minimum} or newer"
+                    )
+        self.assertEqual([], failures, "\n".join(failures))
+
+    def test_workflows_use_github_hosted_runners(self) -> None:
+        failures: list[str] = []
+        for workflow in sorted(WORKFLOW_DIR.glob("*.yml")):
+            text = workflow.read_text(encoding="utf-8")
+            for match in RUNS_ON_RE.finditer(text):
+                value = match.group("value").strip()
+                if "self-hosted" in value:
+                    failures.append(
+                        f"{workflow.name}: runs-on {value} uses a self-hosted "
+                        "runner; use a GitHub-hosted runner or an ephemeral "
+                        "self-hosted runner"
                     )
         self.assertEqual([], failures, "\n".join(failures))
 
