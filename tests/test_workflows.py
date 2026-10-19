@@ -10,6 +10,10 @@ Node.js 24. Composite actions are checked through the action they embed; for
 example, ``upload-pages-artifact@v5`` uses ``upload-artifact@v7`` (Node.js 24),
 while ``upload-pages-artifact@v4`` still embeds ``upload-artifact@v4``
 (Node.js 20).
+
+Actions must also be pinned to a full-length commit SHA. A mutable tag or branch
+allows an upstream compromise to change the code that runs here, so each
+``uses`` reference keeps the human-readable release in a trailing comment.
 """
 
 from __future__ import annotations
@@ -39,6 +43,8 @@ USES_RE = re.compile(
     r"(?:\s*#\s*(?P<tag>v?[0-9]+(?:\.[0-9]+)*))?",
     re.MULTILINE,
 )
+
+FULL_SHA_RE = re.compile(r"[0-9a-f]{40}")
 
 
 def action_major(match: re.Match[str]) -> int | None:
@@ -73,6 +79,26 @@ class WorkflowRuntimeTests(unittest.TestCase):
                     )
         self.assertEqual([], failures, "\n".join(failures))
 
+    def test_actions_are_pinned_to_full_length_commit_shas(self) -> None:
+        failures: list[str] = []
+        for workflow in sorted(WORKFLOW_DIR.glob("*.yml")):
+            text = workflow.read_text(encoding="utf-8")
+            for match in USES_RE.finditer(text):
+                action = match.group("action")
+                ref = match.group("ref")
+                tag = match.group("tag")
+                if not FULL_SHA_RE.fullmatch(ref):
+                    failures.append(
+                        f"{workflow.name}: {action}@{ref} is not pinned to a "
+                        "full-length commit SHA"
+                    )
+                if tag is None:
+                    failures.append(
+                        f"{workflow.name}: {action}@{ref} is missing a release "
+                        "version comment"
+                    )
+        self.assertEqual([], failures, "\n".join(failures))
+
     def test_pages_workflow_deploys_docs_with_node24_actions(self) -> None:
         workflow = WORKFLOW_DIR / "pages.yml"
         self.assertTrue(workflow.is_file(), "the Pages deployment workflow is missing")
@@ -82,8 +108,10 @@ class WorkflowRuntimeTests(unittest.TestCase):
         self.assertRegex(text, r"(?m)^\s*branches:\s*\[\"main\"\]\s*$")
         self.assertRegex(text, r"(?m)^\s*pages:\s*write\s*$")
         self.assertRegex(text, r"(?m)^\s*id-token:\s*write\s*$")
-        self.assertIn("actions/upload-pages-artifact@v5", text)
-        self.assertIn("actions/deploy-pages@v5", text)
+        self.assertRegex(
+            text, r"actions/upload-pages-artifact@[0-9a-f]{40}\s+# v5"
+        )
+        self.assertRegex(text, r"actions/deploy-pages@[0-9a-f]{40}\s+# v5")
         self.assertRegex(text, r"(?m)^\s*path:\s*docs\s*$")
 
     def test_pages_artifacts_exist(self) -> None:
