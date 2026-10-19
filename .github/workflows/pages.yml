@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   deploy:
-    runs-on: [self-hosted, linux, arm64, hikae-flash]
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       pages: write
