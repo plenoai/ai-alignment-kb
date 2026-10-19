@@ -20,4 +20,4 @@ AI Alignment KB のナレッジグラフを再構築し、GitHub Pages にデプ
 - visualize.py は cognee グラフが空の場合 wiki リンクのみで生成する（フォールバック）
 - `.data/` 配下のテキストファイルは cognee が生成する中間ファイル。変更があればコミットに含める
 - `OPENAI_API_KEY` 環境変数が必要
-- GitHub Pages の Source は **GitHub Actions** に設定する。従来の branch ビルドは GitHub 管理の `actions/upload-artifact@v4`（Node.js 20）を使い、非推奨警告を出す。Pages ワークフローは設定が branch ビルドのままなら自動移行を試み、権限が足りない場合はデプロイをスキップして必要な設定をログに残す
+- GitHub Pages の Source は **GitHub Actions** を推奨する。従来の branch ビルドは GitHub 管理の `actions/upload-artifact@v4`（Node.js 20）を使い、非推奨警告を出す。Pages ワークフローは branch ビルドが残っていても、その管理ワークフローをキャンセルしてから `docs/` を GitHub Actions 経由でデプロイする。設定変更の権限がある場合は自動移行も試みる

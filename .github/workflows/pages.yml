@@ -3,39 +3,25 @@ name: Deploy GitHub Pages
 on:
   push:
     branches: ["main"]
-    paths:
-      - "docs/**"
-      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: pages
-  cancel-in-progress: false
-
 jobs:
-  deploy:
+  # GitHub's branch-based Pages publisher is a managed workflow that cannot be
+  # edited. It still targets the deprecated Node.js 20 upload-artifact action,
+  # so a successful branch build always adds a warning annotation. Stop that
+  # build and publish the same docs through this repository-owned workflow.
+  retire-legacy-build:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      actions: write
       pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        with:
-          persist-credentials: false
-
-      # Legacy Pages builds are run by GitHub with upload-artifact@v4, which
-      # targets Node.js 20. Prefer a repo-owned deployment and, when the token
-      # has enough permission, migrate the Pages source automatically.
-      - name: Ensure Pages uses GitHub Actions
-        id: pages-source
+      - name: Retire GitHub's legacy Pages build
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         with:
           script: |
@@ -46,17 +32,22 @@ jobs:
               ({ data: pages } = await github.rest.repos.getPages({ owner, repo }));
             } catch (error) {
               core.info(`Unable to read the Pages configuration: ${error.message}`);
-              core.setOutput("enabled", "false");
-              core.notice("GitHub Pages is not available. An administrator must enable it with Source: GitHub Actions.");
               return;
             }
 
             if (pages.build_type === "workflow") {
-              core.info("GitHub Pages deploys from GitHub Actions.");
-              core.setOutput("enabled", "true");
+              core.info("GitHub Pages already deploys from GitHub Actions.");
               return;
             }
 
+            if (context.eventName !== "push") {
+              core.info("A manual run has no push-triggered legacy build to cancel.");
+              return;
+            }
+
+            // Best effort: switch the repository setting when the token is
+            // allowed to administer Pages. The deployment below no longer
+            // depends on this succeeding.
             try {
               await github.rest.repos.updateInformationAboutPagesSite({
                 owner,
@@ -64,27 +55,77 @@ jobs:
                 build_type: "workflow",
               });
               core.info("Switched the GitHub Pages source to GitHub Actions.");
-              core.setOutput("enabled", "true");
             } catch (error) {
-              // Do not emit a warning annotation: the controller turns those
-              // into new warning issues. Report the required operator action
-              // without making this workflow fail.
+              // Never emit a warning annotation here: it would be filed as a
+              // new warning issue. Keep the legacy cancellation working below.
               core.info(`Pages source remains "${pages.build_type}": ${error.message}`);
-              core.setOutput("enabled", "false");
-              core.notice("An administrator must set Settings > Pages > Source to GitHub Actions. Legacy branch builds use the deprecated Node.js 20 upload-artifact action.");
             }
 
+            // The managed workflow is created asynchronously by the push.
+            // Cancel it before its upload step can emit the Node.js 20 warning.
+            const deadline = Date.now() + 90_000;
+            while (Date.now() < deadline) {
+              const { data } = await github.rest.actions.listWorkflowRunsForRepo({
+                owner,
+                repo,
+                head_sha: context.sha,
+                per_page: 100,
+              });
+              const legacy = data.workflow_runs.filter(run =>
+                run.name === "pages build and deployment" &&
+                ["queued", "in_progress", "waiting", "requested", "pending"].includes(run.status));
+              if (legacy.length > 0) {
+                for (const run of legacy) {
+                  core.info(`Cancelling the legacy Pages build (run ${run.id}).`);
+                  await github.rest.actions.cancelWorkflowRun({ owner, repo, run_id: run.id });
+                }
+                // Let the cancellation settle before the replacement deploy,
+                // so Pages has only one build in flight.
+                const settled = Date.now() + 30_000;
+                while (Date.now() < settled) {
+                  const runs = await Promise.all(legacy.map(run =>
+                    github.rest.actions.getWorkflowRun({ owner, repo, run_id: run.id })));
+                  if (runs.every(({ data }) => data.status === "completed")) {
+                    core.info("The legacy Pages build is stopped.");
+                    return;
+                  }
+                  await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+                core.info("Legacy Pages build cancellation requested; continuing.");
+                return;
+              }
+              await new Promise(resolve => setTimeout(resolve, 3000));
+            }
+            core.info("No legacy Pages build was found for this commit.");
+
+  deploy:
+    needs: retire-legacy-build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
       - name: Configure Pages
-        if: steps.pages-source.outputs.enabled == 'true'
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d  # v6.0.0
 
       - name: Upload the static site
-        if: steps.pages-source.outputs.enabled == 'true'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9  # v5.0.0
         with:
           path: docs
 
       - name: Deploy to GitHub Pages
         id: deployment
-        if: steps.pages-source.outputs.enabled == 'true'
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346  # v5.0.1
