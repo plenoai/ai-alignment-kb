@@ -15,7 +15,7 @@ jobs:
   # build and publish the same docs through this repository-owned workflow.
   retire-legacy-build:
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404-arm
     permissions:
       contents: read
       actions: write
@@ -101,7 +101,7 @@ jobs:
   deploy:
     needs: retire-legacy-build
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404-arm
     permissions:
       contents: read
       pages: write
